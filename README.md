@@ -70,17 +70,73 @@ Once you have Phong shading working, including ambient, diffuse, and specular li
 
 Suppose that we use the dot product in the diffuse term, **n** &middot; **l**, to look up the texture.  Because this value represents the cosine of the angle between the two vectors, it will range from -1 to 1. We need to map this value to a texture coordinate, which will range from 0 to 1. 
 
-If we then, use `standardDiffuse.png` (see below), which is zero in the left half corresponding to negative n &middot; l, and increases linearly from 0 to 1 for positive n &middot; l, then we’ll get back the standard diffuse lighting term.
+If we use `standardDiffuse.png`, which is zero in the left half corresponding to negative **n** &middot; **l**, and increases linearly from 0 to 1 for positive **n** &middot; **l**, then we will get back the standard diffuse lighting term, and the object will have the same appearance as the Phong shader.
+
+![standardDiffuse.png](./public/assets/standardDiffuse.png)
+
+
+
+But, if we use `toonDiffuse.png`, we’ll get something that looks like a cartoon, as if an artist were shading using just three colors of paint.
+
+![toonDiffuse](./public/assets/toonDiffuse.png)
+
+Note that this is the same type of lighting effect you see in many games, including *The Legend of Zelda: The Wind Waker* and *Team Fortress 2* (see images below). *Wind Waker* uses a very simplified light model. In this example, it looks like there are just two values used in the shading: each surface is either in bright light or dark. *Team Fortress 2* is a bit more subtle: it reduces the brightness variation in lit areas without completely flattening them out. You can read more about this in "Illustrative Rendering in *Team Fortress 2*," by Mitchell et al., linked in the "Further Reading" section.
+
+![The Legend of Zelda: The Wind Waker](./images/zelda.jpg) ![Team Fortess 2](./images/tf2.jpg) 
+
+Inside your Phong shading program, you will have equations that calculate the intensity of reflected light for ambient, diffuse, and specular. For the diffuse portion, the key quantity will be **n** &middot; **l**, which should range from −1 to 1. This is the value that you want to use to lookup the lighting color to apply from the texture ramp. If the value of **n** &middot; **l** is −1, then you want to use the color on the leftmost side of the texture. If it is 1, then you want to use the color on the rightmost side of the texture. That means your *x* texture coordinate for this lookup will be 0.5 * (**n** &middot; **l**) + 0.5, because texture coordinates only go from 0 to 1. For the *y* texture coordinate, you can use 0 or any other value, because the color only varies from left to right. After calculating these texture coordinates, you can get the color from the texture image using the GLSL built-in function `texture()`, as discussed in class. You can also find an example of this function in `GopherGfx/shaders/gouraud.frag`.
+
+For the specular component, we need to clamp the dot product to positive values anyway before taking the exponent, so you should directly use the intensity as the texture coordinate without rescaling.  Therefore, the texture coordinate will either be max(**e** · **r**, 0)<sup>shininess</sup> or max(**h** · **n**, 0)<sup>shininess</sup> as the texture coordinate without rescaling, depending on whether you implemented the reflection or halfway vector method.
+
+## Silhouette Edges
+
+There are lots of different ways to draw silhouette contours on 3D shapes. We will use a simple method described by Card and Mitchell, linked under "Further Reading." For each edge of the triangle mesh, we check whether it lies on the silhouette, that is, on the boundary between the triangles facing towards the camera and the triangles facing away from it. If so, it is a silhouette edge, and we will draw it as a thick black line segment to create the outline of the shape.
+
+![silhouette diagram](./images/silhouette.jpg)
+
+Drawing a thick line segment takes a little bit of work in OpenGL 3 and above, because the function `glLineWidth()` is no longer officially supported. Instead, we will have to draw the line segment as a quadrilateral whose width is the desired thickness. Since we don't know in advance which edges will be silhouette edges and which will not, we will create a zero-width quadrilateral for *every* edge. In the vertex shader, we will check whether the vertex is part of a silhouette edge, and if so, displace it by the desired thickness. Thus, silhouette edges will be drawn as thick quadrilaterals, while all other edges will be drawn as quadrilaterals of zero width, which can't be seen.
+
+![edge diagram](./images/edgemesh.png)
+
+
+
+The support code provides a class `EdgeMesh` that stores the information needed to draw these silhouette edges. It creates a quadrilateral (4 vertices and 2 triangles) for every edge in the original mesh, as shown above. Each vertex stores its position, its displacement direction (labeled **n** in the diagram above), and the normals of the adjacent faces **n**<sub>left</sub> and **n**<sub>right</sub>. The support code already sends all this mesh data into the `outline.vert` vertex shader for you, but you need to complete the shader implementation yourself. Your vertex shader program should check each vertex for whether it lies on a silhouette edge, that is, whether **n**<sub>left</sub>**·** **e** and **n**<sub>right</sub>**·** **e** have different signs. If so, displace the vertex by **thickness** * **n** when computing the output `gl_Position`. 
+
+The most common mistake in writing this shader is getting mixed up about coordinate spaces. Inside your shader, it is easiest to define the **e** vector in *eye space*, where the camera is located at (0,0,0). This means **n**<sub>left</sub> and **n**<sub>right</sub> should also be transformed into *eye space* by multiplying by the `normalMatrix` before you calculate these dot products. However, this is not the case for **n**. When you move the vertex by **thickness** * **n**, you should do this *before* applying any other transformations to the vertex position or **n**, so that the offset gets applied within the *object space* of the 3D model.
+
+In the first image below, the vertices on all edges are displaced.  Compare this to the second image, with only vertices on silhouette edges displaced.
+
+![all vertices displaced](./images/cow1.png)![all vertices displaced](./images/cow2.png)
 
 ## Rubric
 
 To be added.
 
+## Reference Images
+
+There is a very simple model of a sphere available in the support code. It has just 24 slices and 12 stacks and is a good model to use for testing. The results of your program on this mesh should look like the following as you progress through the assignment:
+
+![reference images](./images/reference.png)
+
+1. The sphere with no shading implemented
+2. Phong shading with the standard Blinn-Phong model
+3. Cartoon shading with `standardDiffuse.png` and `standardSpecular.bmp` (this is identical to the Blinn-Phong model)
+4. Cartoon shading with `toonDiffuse.png` and `toonSpecular.png`
+5. Cartoon shading with silhouette edges drawn
+
+If you fail to normalize the fragment normal when doing Phong shading, you will get an *incorrect* result that looks like the image below. Note that even if your vertex normals are normalized, the rasterizer will interpolate them to fragments by averaging, and the average of two unit vectors may not itself be a unit vector!
+
+![unnormalized result](./images/unnormalized.png)
+
 ## Wizard Bonus Challenge
 
 All of the assignments in the course will include great opportunities for students to go beyond the requirements of the assignment and do cool extra work. On each assignment, you can earn **one bonus point** for implementing a meaningful new feature to your program. This should involve some original new programming, and should not just be something that can be quickly implemented by copying and slightly modifying existing code.  
 
-There are great opportunities for extra work in this assignment. For example:
+Once you get the hang of them, shaders can be really fun! Try out some different textures and lighting effects. One interesting possible extension of our 1D ramp textures could be to use a single 2D texture that you look up using both the diffuse and specular intensities. With shaders you can also do other cool effects like adding stripes, waves, random noise, or bumps to the surface.
+
+## Academic Integrity Reminder
+
+Shaders are hard to learn and you will find tons of resources, examples, and other information online. You would defeat the purpose of the assignment if you use these online resources to complete the core program (and break our course rules). To solve the core assignment, you must **only** use the course materials. However, **after** you have successfully completed the core assignment, if you then wish to continue working on Wizardly extensions, then it is fine to use online resources to continue learning more about shaders and/or even implement examples that you find on the internet. However, if you are inspired by or copy and modify code from elsewhere, you must **cite your sources** in your README file and any describe how you used them in any additional shaders that you create. Aside from any licensing issues that may surround the code you are using, we need you to cite your sources and inspirations so that we may accurately understand how much of your wizardly work represents your own intellectual contribution.
 
 ## Submission
 
@@ -98,6 +154,16 @@ https://csci-4611-spring-2022.github.io/your-repo-name-here
 If your program runs correctly, then you are finished!  The published build will indicate to the TAs that your assignment is ready for grading.  If you change your mind and want to make further changes to your code, then just delete the `gh-pages` branch and set the GitHub pages source back to `None`, and it will unpublish the website.
 
 Note that the published JavaScript bundle code generated by the TypeScript compiler has been minified so that it is not human-readable. So, you can feel free to send this link to other students, friends, and family to show off your work!
+
+## Further Reading
+
+You do not need to read these articles to implement the assignment. They are only provided in case you are curious and want to learn more about non-photorealistic rendering.
+
+Mitchell, Francke, and Eng, [Illustrative Rendering in Team Fortress 2](https://valvearchive.com/archive/Other%20Files/Publications/NPAR07_IllustrativeRenderingInTeamFortress2.pdf), *Non- Photorealistic and Artistic Rendering*, 2007. 
+
+Gooch, Gooch, Shirley, and Cohen, [A Non-Photorealistic Lighting Model for Automatic Technical Illustration](https://users.cs.northwestern.edu/~ago820/SIG98/abstract.html), *SIGGRAPH*, 1998. 
+
+Card and Mitchell, [Non-Photorealistic Rendering with Pixel and Vertex Shaders](http://developer.amd.com/wordpress/media/2012/10/ShaderX_NPR.pdf), *ShaderX: Vertex and Pixel Shaders Tips and Tricks*, 2002.
 
 ## Acknowledgments
 
