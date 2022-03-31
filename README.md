@@ -2,7 +2,7 @@
 
 **Due: Thursday, April 14, 11:59pm CDT**
 
-GLSL shaders make it possible for us to create some amazing lighting effects in real- time computer graphics. These range from photorealistic lighting to artistically inspired non-photorealistic rendering, as featured in games like *The Legend of Zelda: The Wind Waker* and *Team Fortress 2*. In this assignment, you will implement GLSL shaders that can produce both realistic per-pixel lighting, "toon shading," and a variety of other effects. You will also implement another shader that adds silhouette edges to complete a cartoon effect.
+GLSL shaders make it possible for us to create some amazing lighting effects in real- time computer graphics. These range from photorealistic lighting to artistically inspired non-photorealistic rendering, as featured in games like *The Legend of Zelda: The Wind Waker* and *Team Fortress 2*. In this assignment, you will implement GLSL shaders that can produce both realistic per-pixel lighting, cartoon shading, and a variety of other effects. You will also implement another shader that adds silhouette edges to complete a cartoon effect.
 
 In this assignment, you will learn:
 
@@ -52,19 +52,21 @@ There are three shader mini-programs that you need to complete:
 2. Complete the `toon.frag` fragment shader to correctly calculate the per-pixel toon shading, using the *diffuseRamp.png* and *specularRamp.png* textures to control the lighting.
 3. Complete the `outline.vert` vertex shader to draw a black outline for the silhouette edges of the mesh, when rendering in "toon" mode.
 
-## Graphics Framework
+## GopherGfx
 
-to be added.
+The base program for this assignment is implemented using GopherGfx, a high-level graphics library currently under development by your instructor.  The goals include: (1) implementing all of the functionality for teaching CSCI 4611 in future semesters, (2) maintaining a minimalistic, clean, and consistent structure, and (3) avoiding the unnecessary complexities and pain points that have tripped people up while trying to learn TypeScript and Three.js. GopherGfx has an extensible framework for shader programming and includes Gouraud, wireframe, and unlit shaders out-of-the-box.
+
+The basic skeleton for the Phong, cartoon, and outline shaders is already provided, and all the necessary information has already been passed to each program.  Therefore, you will not need to modify the TypeScript code or familiarize yourself with the GopherGfx API in order to complete this assignment.  However, please feel free to poke around the code if you would like to learn more about how a high-level graphics library is organized.
 
 ## Per-Pixel Phong Shading
 
-In class, we will work on some shader programs that calculate ambient, diffuse, and specular lighting using per-vertex (Gouraud) shading. Your job is to extend the concepts and programs we develop in class to implement per-pixel Phong shading with the same lighting model. You should be able to build this by extending the shaders that we discuss and develop in class.
+In class, we will work on some shader programs that calculate ambient, diffuse, and specular lighting using per-vertex (Gouraud) shading.  You can also find the complete vertex and fragment shader code in `GopherGfx/shaders/gouraud.vert` and `GopherGfx/shaders/gouraud.frag`, respectively.  
 
-Implement a shader program that performs all the calculations to accurately calculate the Phong lighting model for each pixel.  The lighting terms must vary per-pixel based on the normal and the light position, as well as the various material properties (such as the specular exponent). You should implement this shader following the lighting model equations discussed in class. 
+Your job is to implement per-pixel Phong shading with the same lighting model as the Gouraud shader. You should be able to build this by adapting code from the shaders that we discuss and develop in class.  You will need to write a fragment shader that performs all the calculations to accurately calculate the Phong lighting model for each pixel.  The lighting terms must vary per-pixel based on the normal and the light position, as well as the various material properties (such as the specular exponent). You should implement this shader following the lighting model equations discussed in class. 
 
 For the specular component, you may use either the reflection vector or halfway vector method presented in lecture.  The traditional Phong model uses the reflection vector, and the halfway vector is a modification known as the Blinn-Phong model. The instructor's implementation uses the reflection vector, but either solution is acceptable.
 
-## Flexible Toon Shading Using Texture Images
+## Flexible Cartoon Shading Using Texture Images
 
 Once you have Phong shading working, including ambient, diffuse, and specular lighting, then you should copy and paste this code into `toon.frag`.  You can then adapt the shader to implement cartoon-style shading. Rather than setting the final color based on the intensity of light you calculate for the Phong model, you will instead use this intensity value as a lookup into a texture, and use that to compute the final color. A texture used in this way is typically called a "ramp." Using this strategy, you will be able to get a wide range of different lighting effects just by switching the texture you use for input.
 
@@ -110,7 +112,24 @@ In the first image below, the vertices on all edges are displaced.  Compare this
 
 ## Rubric
 
-To be added.
+Graded out of 20 points.  Partial credit is possible for each step.
+
+**Part 1: Phong Shading** (8 points total)
+
+1. Compute and apply the ambient component in the fragment shader. (1 point)
+2. Correctly compute different values of **l** to support both point and directional lights. (1 point)
+3. Compute and apply the diffuse component in the fragment shader. (3 points)
+4. Compute and apply the specular component in the fragment shader. (3 points)
+
+**Part 2: Cartoon Shading** (6 points total)
+
+3. Compute and apply the specular component using a lookup into the `diffuseRamp` texture. (3)
+4. Compute and apply the specular component using a lookup into the `specularRamp` texture. (3)
+
+**Part 3: Silhouette Shading** (6 points total)
+
+5. Correctly compute the values of **e**, **n**<sub>left</sub>, and **n**<sub>right</sub> in eye space. (3)
+6. Displace the silhouette vertices along the normal in object space. (3 points)
 
 ## Reference Images
 
@@ -136,7 +155,7 @@ Once you get the hang of them, shaders can be really fun! Try out some different
 
 ## Academic Integrity Reminder
 
-Shaders are hard to learn and you will find tons of resources, examples, and other information online. You would defeat the purpose of the assignment if you use these online resources to complete the core program (and break our course rules). To solve the core assignment, you must **only** use the course materials. However, **after** you have successfully completed the core assignment, if you then wish to continue working on Wizardly extensions, then it is fine to use online resources to continue learning more about shaders and/or even implement examples that you find on the internet. However, if you are inspired by or copy and modify code from elsewhere, you must **cite your sources** in your README file and any describe how you used them in any additional shaders that you create. Aside from any licensing issues that may surround the code you are using, we need you to cite your sources and inspirations so that we may accurately understand how much of your wizardly work represents your own intellectual contribution.
+Shaders are hard to learn and you will find tons of resources, examples, and other information online. You would defeat the purpose of the assignment if you use these online resources to complete the core program (and break our course rules). To solve the core assignment, you must **only** use our course materials and the [official GLSL documentation](https://docs.gl/sl4/all). However, **after** you have successfully completed the core assignment, if you then wish to continue working on Wizardly extensions, then it is fine to use online resources to continue learning more about shaders and/or even implement examples that you find on the internet. However, if you are inspired by or copy and modify code from elsewhere, you must **cite your sources** in your README file and any describe how you used them in any additional shaders that you create. Aside from any licensing issues that may surround the code you are using, we need you to cite your sources and inspirations so that we may accurately understand how much of your wizardly work represents your own intellectual contribution.
 
 ## Submission
 

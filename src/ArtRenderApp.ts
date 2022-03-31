@@ -23,6 +23,7 @@ export class ArtRenderApp extends gfx.GraphicsApp
     private outlineMaterial: OutlineMaterial;
     private toonMaterial: ToonMaterial;
     private wireframeMaterial: gfx.WireframeMaterial;
+    private unlitMaterial: gfx.UnlitMaterial;
 
     private pointLight: gfx.PointLight;
     private directionalLight: gfx.DirectionalLight;
@@ -45,6 +46,7 @@ export class ArtRenderApp extends gfx.GraphicsApp
             new gfx.Texture('./assets/toonSpecular.png')
         );
         this.wireframeMaterial = new gfx.WireframeMaterial();
+        this.unlitMaterial = new gfx.UnlitMaterial();
 
         this.pointLight = new gfx.PointLight(new gfx.Color3(1, 1, 1));
         this.directionalLight = new gfx.DirectionalLight(new gfx.Color3(1, 1, 1))
@@ -99,6 +101,8 @@ export class ArtRenderApp extends gfx.GraphicsApp
         this.outlineMaterial.color = new gfx.Color3(0, 0, 0);
         this.outlineMaterial.visible = false;
 
+        this.unlitMaterial.color.set(1, 0.4, 0.4);
+
         const loadCallback = (mesh: gfx.Mesh) => {
             const edgeMesh = new EdgeMesh();
             edgeMesh.createFromMesh(mesh);
@@ -141,7 +145,8 @@ export class ArtRenderApp extends gfx.GraphicsApp
             'Gouraud Shading', 
             'Phong Shading', 
             'Toon Shading',
-            'Wireframe Shading'
+            'Wireframe Shading',
+            'Unlit Shading'
         ]);
         renderStyleController.name('');
         renderStyleController.onChange(()=>{this.changeRenderStyle()});
@@ -200,6 +205,13 @@ export class ArtRenderApp extends gfx.GraphicsApp
        {
             this.models.forEach((model: gfx.Mesh) => {
                 model.material = this.wireframeMaterial;
+            });
+            this.outlineMaterial.visible = false;
+       }
+       else if(this.renderStyle == 'Unlit Shading')
+       {
+            this.models.forEach((model: gfx.Mesh) => {
+                model.material = this.unlitMaterial;
             });
             this.outlineMaterial.visible = false;
        }
