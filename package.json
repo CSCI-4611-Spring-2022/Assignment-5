@@ -12,6 +12,7 @@
     "dat.gui": "^0.7.9",
     "esbuild-plugin-glsl": "^1.0.5",
     "eslint": "^8.9.0",
+    "javascript-obfuscator": "^4.0.0",
     "tsup": "^5.12.1",
     "vite": "^2.8.6",
     "vite-plugin-glsl": "^0.1.1"
@@ -19,7 +20,7 @@
   "scripts": {
     "dev": "vite",
     "start": "vite",
-    "build": "vite build",
+    "build": "vite build && javascript-obfuscator ./dist/index.js --output ./dist/index.js",
     "preview": "vite preview"
   }
 }
